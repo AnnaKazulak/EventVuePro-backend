@@ -7,7 +7,7 @@ const Guest = require("../models/Guest.model");
 
 //  POST /api/events  -  Creates a new event
 router.post("/events", (req, res, next) => {
-  const { title, description, date, time, location, imageUrl } = req.body;
+  const { title, description, date, time, location, imageUrl, guests } = req.body;
 
   const newEvent = {
     title,
@@ -16,7 +16,7 @@ router.post("/events", (req, res, next) => {
     time,
     location,
     imageUrl,
-    guests: [],
+    guests: guests,
   };
 
   Event.create(newEvent)
