@@ -1,34 +1,56 @@
 const router = require("express").Router();
-
+const cloudinary = require("cloudinary").v2;
 const mongoose = require("mongoose");
 
 const Event = require("../models/Event.model");
 const Guest = require("../models/Guest.model");
 const fileUploader = require("../config/cloudinary.config");
 
-
 // POST "/api/upload" => Route that receives the image, sends it to Cloudinary via the fileUploader and returns the image URL
 router.post("/upload", fileUploader.single("imageUrl"), (req, res, next) => {
-  console.log("file is: ", req.file)
- 
+  console.log("file is: ", req.file);
+
   if (!req.file) {
     next(new Error("No file uploaded!"));
     return;
   }
-  
+
+  // specify the URL of the image you want to get the dimensions of
+  const imageUrl = req.file.path;
+
+  // call the getImage method to get the dimensions of the image
+  cloudinary.uploader.explicit(
+    imageUrl,
+    { type: "fetch" },
+    function (error, result) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log(result.width, result.height);
+        res.json({
+          fileUrl: req.file.path,
+          imageWidth: result.width,
+          imageHeight: result.height,
+        });
+      }
+    }
+  );
+
   // Get the URL of the uploaded file and send it as a response.
   // 'fileUrl' can be any name, just make sure you remember to use the same when accessing it on the frontend
-  
-  res.json({ fileUrl: req.file.path });
+
+  // res.json({ fileUrl: req.file.path});
 });
 
 router.post("/guests", (req, res, next) => {
-  const { name, description, imageUrl, eventId } = req.body;
-
+  const { name, description, imageUrl, eventId , imageWidth, imageHeight} = req.body;
+  console.log(req.body)
   const newGuest = {
     name,
     description,
     imageUrl,
+    imageHeight,
+    imageWidth,
     event: eventId,
   };
 
@@ -117,28 +139,28 @@ router.put("/guests/:guestId", (req, res, next) => {
 
 // DELETE /guests/:guestId Delete a guest by their ID.
 router.delete("/guests/:guestId", (req, res, next) => {
-    const { guestId } = req.params;
-  
-    if (!mongoose.Types.ObjectId.isValid(guestId)) {
-      res.status(400).json({ message: "Specified id is not valid" });
-      return;
-    }
-  
-    Guest.findByIdAndRemove(guestId)
-      .then((deletedGuest) => {
-        if (!deletedGuest) {
-          res.status(404).json({ message: "Guest not found" });
-        } else {
-          res.json({ message: "Guest deleted successfully" });
-        }
-      })
-      .catch((err) => {
-        console.error("Error deleting guest...", err);
-        res.status(500).json({
-          message: "Error deleting guest",
-          error: err,
-        });
+  const { guestId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(guestId)) {
+    res.status(400).json({ message: "Specified id is not valid" });
+    return;
+  }
+
+  Guest.findByIdAndRemove(guestId)
+    .then((deletedGuest) => {
+      if (!deletedGuest) {
+        res.status(404).json({ message: "Guest not found" });
+      } else {
+        res.json({ message: "Guest deleted successfully" });
+      }
+    })
+    .catch((err) => {
+      console.error("Error deleting guest...", err);
+      res.status(500).json({
+        message: "Error deleting guest",
+        error: err,
       });
-  });
-  
+    });
+});
+
 module.exports = router;
