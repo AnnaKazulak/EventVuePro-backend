@@ -8,7 +8,10 @@ const guestSchema = new Schema(
     imageWidth: Number,
     imageHeight: Number,
     event: { type: Schema.Types.ObjectId, ref: "Event" },
-    
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   {
     timestamps: true,
