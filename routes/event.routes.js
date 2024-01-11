@@ -7,7 +7,15 @@ const Guest = require("../models/Guest.model");
 
 //  POST /api/events  -  Creates a new event
 router.post("/events", (req, res, next) => {
-  const { title, description, date, time, location, imageUrl, guests } = req.body;
+  const {
+    title,
+    description,
+    date,
+    time,
+    location,
+    imageUrl,
+    guests
+  } = req.body;
 
   const newEvent = {
     title,
@@ -22,6 +30,15 @@ router.post("/events", (req, res, next) => {
   Event.create(newEvent)
     .then((response) => res.json(response))
     .catch((err) => {
+      if (err.name === 'ValidationError') {
+        // Mongoose validation error (e.g., required field missing)
+        const validationErrors = Object.values(err.errors).map((error) => error.message);
+        return res.status(400).json({
+          message: 'Validation error',
+          error: validationErrors,
+        });
+      }
+
       console.log("Error creating new event...", err);
       res.status(500).json({
         message: "Error creating a new event",
@@ -46,10 +63,14 @@ router.get("/events", (req, res, next) => {
 
 //  GET /api/events/:eventId -  Retrieves a specific event by id
 router.get("/events/:eventId", (req, res, next) => {
-  const { eventId } = req.params;
+  const {
+    eventId
+  } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(eventId)) {
-    res.status(400).json({ message: "Specified id is not valid" });
+    res.status(400).json({
+      message: "Specified id is not valid"
+    });
     return;
   }
 
@@ -67,10 +88,14 @@ router.get("/events/:eventId", (req, res, next) => {
 
 // PUT  /api/events/:eventId  -  Updates a specific event by id
 router.put("/events/:eventId", (req, res, next) => {
-  const { eventId } = req.params;
+  const {
+    eventId
+  } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(eventId)) {
-    res.status(400).json({ message: "Specified id is not valid" });
+    res.status(400).json({
+      message: "Specified id is not valid"
+    });
     return;
   }
 
@@ -84,7 +109,9 @@ router.put("/events/:eventId", (req, res, next) => {
     guests: req.body.guests,
   };
 
-  Event.findByIdAndUpdate(eventId, newDetails, { new: true })
+  Event.findByIdAndUpdate(eventId, newDetails, {
+      new: true
+    })
     .then((updatedEvent) => res.json(updatedEvent))
     .catch((err) => {
       console.log("Error updating event", err);
@@ -97,26 +124,30 @@ router.put("/events/:eventId", (req, res, next) => {
 
 // DELETE  /api/events/:eventId  -  Deletes a specific event by id
 router.delete("/events/:eventId", (req, res, next) => {
-    const { eventId } = req.params;
-  
-    if (!mongoose.Types.ObjectId.isValid(eventId)) {
-      res.status(400).json({ message: "Specified id is not valid" });
-      return;
-    }
-  
-    Event.findByIdAndRemove(eventId)
-      .then(() =>
-        res.json({
-          message: `Event with ${eventId} is removed successfully.`,
-        })
-      )
-      .catch((err) => {
-        console.log("error deleting event", err);
-        res.status(500).json({
-          message: "error deleting event",
-          error: err,
-        });
+  const {
+    eventId
+  } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(eventId)) {
+    res.status(400).json({
+      message: "Specified id is not valid"
+    });
+    return;
+  }
+
+  Event.findByIdAndRemove(eventId)
+    .then(() =>
+      res.json({
+        message: `Event with ${eventId} is removed successfully.`,
+      })
+    )
+    .catch((err) => {
+      console.log("error deleting event", err);
+      res.status(500).json({
+        message: "error deleting event",
+        error: err,
       });
-  });
+    });
+});
 
 module.exports = router;
