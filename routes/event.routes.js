@@ -1,9 +1,53 @@
 const router = require("express").Router();
+const cloudinary = require("cloudinary").v2;
+const multer = require("../config/multer.config");
 
 const mongoose = require("mongoose");
-
 const Event = require("../models/Event.model");
 const Guest = require("../models/Guest.model");
+
+
+
+router.post("/upload", multer.array("imageUrl", 10), (req, res, next) => {
+  try {
+    const { imageType } = req.body;
+
+    if (!imageType) {
+      return res.status(400).json({ error: "Image type not provided" });
+    }
+
+    if (imageType === "mainImage") {
+      // Handle the main image upload
+      const mainImage = req.files[0];
+      const mainImageUrl = mainImage.path; 
+      console.log("mainImage",mainImage);
+
+      
+      // Additional processing if needed
+      return res.json({ fileUrl: mainImageUrl });
+    } else if (imageType === "galleryImage") {
+      // Handle the gallery images upload
+      const galleryImages = req.files.map((file) => file.path); 
+     
+      console.log("🌞 galleryImages",galleryImages); 
+      return res.json({ fileUrl: galleryImages });
+    } else {
+      return res.status(400).json({ error: "Invalid image type" });
+    }
+
+    const processedFiles = req.files.map((file) => ({
+      fileUrl: file.path, 
+    }));
+
+    return res.json(processedFiles);
+  } catch (error) {
+    console.error("Error in /upload route:", error);
+    next(error); // Forward the error to the error handler middleware
+  }
+});
+
+module.exports = router;
+
 
 //  POST /api/events  -  Creates a new event
 router.post("/events", (req, res, next) => {
@@ -14,6 +58,7 @@ router.post("/events", (req, res, next) => {
     time,
     location,
     imageUrl,
+    gallery,
     guests
   } = req.body;
 
@@ -24,6 +69,7 @@ router.post("/events", (req, res, next) => {
     time,
     location,
     imageUrl,
+    gallery,
     guests: guests,
   };
 
