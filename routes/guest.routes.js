@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const cloudinary = require("cloudinary").v2;
+const multer = require("../config/multer.config");
 const mongoose = require("mongoose");
 const {
   isAuthenticated
@@ -10,10 +11,10 @@ const {
 
 const Event = require("../models/Event.model");
 const Guest = require("../models/Guest.model");
-const fileUploader = require("../config/cloudinary.config");
+
 
 // POST "/api/upload" => Route that receives the image, sends it to Cloudinary via the fileUploader and returns the image URL
-router.post("/upload", fileUploader.single("imageUrl"), (req, res, next) => {
+router.post("/upload", multer.single("imageUrl"), (req, res, next) => {
   console.log("file is: ", req.file);
 
   if (!req.file) {
