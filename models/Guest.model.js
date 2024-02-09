@@ -12,6 +12,8 @@ const guestSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
     },
+    email: String, 
+    whatsappNumber: String, 
   },
   {
     timestamps: true,
