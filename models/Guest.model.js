@@ -3,6 +3,8 @@ const { Schema, model } = require("mongoose");
 const guestSchema = new Schema(
   {
     name: { type: String, required: true },
+    email: String, 
+    whatsappNumber: String, 
     description: String,
     imageUrl: { type: String, required: false },
     imageWidth: Number,
@@ -11,9 +13,7 @@ const guestSchema = new Schema(
     creator: {
       type: Schema.Types.ObjectId,
       ref: "User",
-    },
-    email: String, 
-    whatsappNumber: String, 
+    }, 
   },
   {
     timestamps: true,

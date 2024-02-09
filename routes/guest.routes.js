@@ -177,39 +177,26 @@ router.put("/guests/:guestId", isAuthenticated, async (req, res, next) => {
         });
     }
 
-    const newDetails = {
-      name,
-      email,
-      whatsappNumber,
-      description,
-      imageUrl
-    };
+    // If imageUrl is not provided (meaning no image is uploaded), update the guest details without modifying the imageUrl
+    const newDetails = imageUrl ?
+      {
+        name,
+        email,
+        whatsappNumber,
+        description,
+        imageUrl
+      } :
+      {
+        name,
+        email,
+        whatsappNumber,
+        description
+      };
 
     // Update the guest with the new details
-    const updatedGuest = await Guest.findByIdAndUpdate(guestId, newDetails, {
-      new: true,
-    });
-
-    // Get the dimensions of the updated image
-    const result = await cloudinary.uploader.explicit(
-      updatedGuest.imageUrl, {
-        type: "fetch"
-      },
-      function (error, result) {
-        if (error) {
-          console.log(error);
-        } else {
-          return result;
-        }
-      }
-    );
-
-    // Update the document in the database with the new dimensions
-    await Guest.findByIdAndUpdate(
-      guestId, {
-        imageWidth: result.width,
-        imageHeight: result.height
-      }, {
+    const updatedGuest = await Guest.findByIdAndUpdate(
+      guestId,
+      newDetails, {
         new: true
       }
     );
@@ -219,13 +206,14 @@ router.put("/guests/:guestId", isAuthenticated, async (req, res, next) => {
     console.error("Error updating guest...", err);
     res.status(500).json({
       message: "Error updating guest",
-      error: err,
+      error: err
     });
   }
 });
 
 
 // DELETE /guests/:guestId Delete a guest by their ID.
+
 router.delete("/guests/:guestId", isAuthenticated, (req, res, next) => {
   const {
     guestId
