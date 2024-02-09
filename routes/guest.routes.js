@@ -48,6 +48,8 @@ router.post("/upload", multer.single("imageUrl"), (req, res, next) => {
 router.post("/guests", isAuthenticated, (req, res, next) => {
   const {
     name,
+    email,
+    whatsappNumber,
     description,
     imageUrl,
     eventId,
@@ -60,6 +62,8 @@ router.post("/guests", isAuthenticated, (req, res, next) => {
   const userId = req.payload._id;
   const newGuest = {
     name,
+    email,
+    whatsappNumber,
     description,
     imageUrl,
     imageHeight,
@@ -146,6 +150,8 @@ router.put("/guests/:guestId", isAuthenticated, async (req, res, next) => {
     } = req.params;
     const {
       name,
+      email,
+      whatsappNumber,
       description,
       imageUrl
     } = req.body;
@@ -173,6 +179,8 @@ router.put("/guests/:guestId", isAuthenticated, async (req, res, next) => {
 
     const newDetails = {
       name,
+      email,
+      whatsappNumber,
       description,
       imageUrl
     };
