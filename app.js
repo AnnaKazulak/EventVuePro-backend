@@ -24,6 +24,9 @@ app.use("/api", require("./routes/index.routes"));
 app.use("/api", require("./routes/event.routes"));
 app.use("/api", require("./routes/guest.routes"));
 
+console.log("Mounting email routes...");
+app.use("/api", require("./routes/email.routes"));
+
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);
 
