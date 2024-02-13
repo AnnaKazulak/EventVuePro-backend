@@ -5,11 +5,12 @@ const nodemailer = require('nodemailer');
 router.post('/emails', async (req, res) => {
     const {
         email,
+        subject,
         message
     } = req.body;
 
     // Validate email and message data
-    if (!email || !message) {
+    if (!email || !subject  || !message) {
         return res.status(400).json({
             error: 'Email and message are required'
         });
@@ -30,7 +31,7 @@ router.post('/emails', async (req, res) => {
         const info = await transporter.sendMail({
             from: 'your-email@gmail.com', // Sender's email address
             to: email, // Recipient's email address
-            subject: 'Subject of the email',
+            subject: subject,
             text: message // Plain text body of the email
         });
 
