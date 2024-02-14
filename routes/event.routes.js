@@ -10,33 +10,43 @@ const Guest = require("../models/Guest.model");
 
 router.post("/upload", multer.array("imageUrl", 10), (req, res, next) => {
   try {
-    const { imageType } = req.body;
+    const {
+      imageType
+    } = req.body;
 
     if (!imageType) {
-      return res.status(400).json({ error: "Image type not provided" });
+      return res.status(400).json({
+        error: "Image type not provided"
+      });
     }
 
     if (imageType === "mainImage") {
       // Handle the main image upload
       const mainImage = req.files[0];
-      const mainImageUrl = mainImage.path; 
-      console.log("mainImage",mainImage);
+      const mainImageUrl = mainImage.path;
+      console.log("mainImage", mainImage);
 
-      
+
       // Additional processing if needed
-      return res.json({ fileUrl: mainImageUrl });
+      return res.json({
+        fileUrl: mainImageUrl
+      });
     } else if (imageType === "galleryImage") {
       // Handle the gallery images upload
-      const galleryImages = req.files.map((file) => file.path); 
-     
-      console.log("🌞 galleryImages",galleryImages); 
-      return res.json({ fileUrl: galleryImages });
+      const galleryImages = req.files.map((file) => file.path);
+
+      console.log("🌞 galleryImages", galleryImages);
+      return res.json({
+        fileUrl: galleryImages
+      });
     } else {
-      return res.status(400).json({ error: "Invalid image type" });
+      return res.status(400).json({
+        error: "Invalid image type"
+      });
     }
 
     const processedFiles = req.files.map((file) => ({
-      fileUrl: file.path, 
+      fileUrl: file.path,
     }));
 
     return res.json(processedFiles);
@@ -45,8 +55,6 @@ router.post("/upload", multer.array("imageUrl", 10), (req, res, next) => {
     next(error); // Forward the error to the error handler middleware
   }
 });
-
-module.exports = router;
 
 
 //  POST /api/events  -  Creates a new event
@@ -132,7 +140,7 @@ router.get("/events/:eventId", (req, res, next) => {
     });
 });
 
-// PUT  /api/events/:eventId  -  Updates a specific event by id
+// PUT /api/events/:eventId - Updates a specific event by id
 router.put("/events/:eventId", (req, res, next) => {
   const {
     eventId
@@ -145,28 +153,48 @@ router.put("/events/:eventId", (req, res, next) => {
     return;
   }
 
-  const newDetails = {
-    title: req.body.title,
-    description: req.body.description,
-    date: req.body.date,
-    time: req.body.time,
-    location: req.body.location,
-    imageUrl: req.body.imageUrl,
-    guests: req.body.guests,
-  };
+  const {
+    title,
+    description,
+    date,
+    time,
+    location,
+    imageUrl,
+    guests,
+    gallery
+  } = req.body;
 
-  Event.findByIdAndUpdate(eventId, newDetails, {
-      new: true
+  Event.findById(eventId)
+    .then((event) => {
+      if (!event) {
+        return res.status(404).json({
+          message: "Event not found"
+        });
+      }
+
+      // Update the event fields
+      event.title = title;
+      event.description = description;
+      event.date = date;
+      event.time = time;
+      event.location = location;
+      event.imageUrl = imageUrl;
+      event.guests = guests;
+      event.gallery = gallery; // Update the gallery field
+
+      // Save the updated event
+      return event.save();
     })
     .then((updatedEvent) => res.json(updatedEvent))
     .catch((err) => {
       console.log("Error updating event", err);
       res.status(500).json({
         message: "Error updating event",
-        error: err,
+        error: err
       });
     });
 });
+
 
 // DELETE  /api/events/:eventId  -  Deletes a specific event by id
 router.delete("/events/:eventId", (req, res, next) => {
