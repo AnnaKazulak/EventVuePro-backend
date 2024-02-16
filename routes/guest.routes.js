@@ -12,6 +12,8 @@ const {
 const Event = require("../models/Event.model");
 const Guest = require("../models/Guest.model");
 
+// Define a regex pattern for email validation
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // POST "/api/upload" => Route that receives the image, sends it to Cloudinary via the fileUploader and returns the image URL
 router.post("/upload", multer.single("imageUrl"), (req, res, next) => {
@@ -55,9 +57,21 @@ router.post("/guests", isAuthenticated, (req, res, next) => {
     eventId,
     imageWidth,
     imageHeight
-  } =
-  req.body;
-  console.log(req.body);
+  } = req.body;
+
+  // Validate name and email fields
+  if (!name) {
+    return res.status(400).json({
+      message: "Name and email are required fields"
+    });
+  }
+
+    // Validate email format using regex
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        message: "Invalid email format"
+      });
+    }
 
   const userId = req.payload._id;
   const newGuest = {
@@ -82,6 +96,15 @@ router.post("/guests", isAuthenticated, (req, res, next) => {
     })
     .then((response) => res.json(response))
     .catch((err) => {
+      if (err.name === 'ValidationError') {
+        // Mongoose validation error (e.g., required field missing)
+        const validationErrors = Object.values(err.errors).map((error) => error.message);
+        return res.status(400).json({
+          message: 'Validation error',
+          error: validationErrors,
+        });
+      }
+
       console.log("Error creating new guest...", err);
       res.status(500).json({
         message: "Error creating a new guest",
@@ -89,6 +112,7 @@ router.post("/guests", isAuthenticated, (req, res, next) => {
       });
     });
 });
+
 
 // GET /api/guests  Retrieves all of the guests
 router.get("/guests", isAuthenticated, checkOwnership, (req, res, next) => {
