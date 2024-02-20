@@ -267,5 +267,31 @@ router.get('/response/no', async (req, res) => {
     }
 });
 
+router.get('/events/:eventId/guest-responses', async (req, res) => {
+    const eventId = req.params.eventId;
+
+    try {
+        // Query the database to find event invitations for the specified event ID
+        const eventInvitations = await EventInvitation.find({
+            eventId
+        });
+
+        // Map event invitations to an object containing guest email and RSVP response
+        const guestResponses = eventInvitations.reduce((acc, curr) => {
+            acc[curr.recipientEmail] = curr.rsvpResponse;
+            return acc;
+        }, {});
+
+        // Respond with the fetched guest responses
+        res.status(200).json(guestResponses);
+    } catch (error) {
+        console.error('Error fetching guest responses:', error);
+        // Send an error response if there's an issue with fetching guest responses
+        res.status(500).json({
+            error: 'Failed to fetch guest responses'
+        });
+    }
+});
+
 
 module.exports = router;
