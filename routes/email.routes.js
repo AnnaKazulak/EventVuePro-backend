@@ -3,30 +3,28 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 const Guest = require('../models/Guest.model');
 const EventInvitation = require('../models/EmailInvitation.model');
+const Event=require('../models/Event.model')
 
 const baseUrl = 'http://localhost:5005';
-
 
 router.post('/emails', async (req, res) => {
     const {
         recipients,
         subject,
         message,
-        eventId
+        eventId,
+        invitedGuests // Add invitedGuests to the request body
     } = req.body;
 
-    console.log("🚎", eventId)
-    // Validate recipients, subject, and message data
-    if (!recipients || !subject || !message || !eventId) {
+    // Validate recipients, subject, message, eventId, and invitedGuests data
+    if (!recipients || !subject || !message || !eventId || !invitedGuests) {
         return res.status(400).json({
-            error: 'Recipients, subject, message and eventId are required'
+            error: 'Recipients, subject, message, eventId, and invitedGuests are required'
         });
     }
 
     try {
-        // Create a transporter using nodemailer
         const transporter = nodemailer.createTransport({
-            // Transporter configuration
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
@@ -34,16 +32,16 @@ router.post('/emails', async (req, res) => {
             }
         });
 
-        // Loop through recipients and send email to each recipient
-        for (const recipientEmail of recipients) {
-            // Generate links for response handling
-            const yesLink = `${process.env.PUBLIC_APP_URL}/api/response/yes?eventId=${eventId}&email=${recipientEmail}`;
-            const noLink = `${process.env.PUBLIC_APP_URL}/api/response/no?eventId=${eventId}&email=${recipientEmail}`;
+        for (const {
+                email,
+                guestId
+            } of recipients) {
+            const yesLink = `${process.env.PUBLIC_APP_URL}/api/response/yes?eventId=${eventId}&email=${email}&guestId=${guestId}`;
+            const noLink = `${process.env.PUBLIC_APP_URL}/api/response/no?eventId=${eventId}&email=${email}&guestId=${guestId}`;
 
-            // Send the email with HTML content
             await transporter.sendMail({
-                from: 'your-email@gmail.com', // Sender's email address
-                to: recipientEmail,
+                from: 'your-email@gmail.com',
+                to: email,
                 subject: subject,
                 html: `
                     <html lang="en">
@@ -91,6 +89,17 @@ router.post('/emails', async (req, res) => {
                             <h1>Event Invitation</h1>
                             <p>${message}</p>
                             <p><strong>Event ID:</strong> ${eventId}</p>
+                            <p><strong>invitedGuests:</strong> ${invitedGuests}</p>
+                            <ul>
+                            ${recipients.map(({ email, guestId }) => ` <
+                    li > Email: $ {
+                        email
+                    },
+                Guest ID: $ {
+                    guestId
+                } < /li>
+                `).join('')}
+                        </ul>
                             <p>Please respond:</p>
                             <a href="${yesLink}" class="btn">Yes, I'll attend</a>
                             <a href="${noLink}" class="btn" style="margin-left: 10px;">No, I can't attend</a>
@@ -99,6 +108,15 @@ router.post('/emails', async (req, res) => {
                     </html>
                 `
             });
+
+            // Save event invitation record 
+            const eventInvitation = new EventInvitation({
+                eventId,
+                recipientEmail: email,
+                invitedGuest: guestId,
+                rsvpResponse: 'pending'
+            });
+            await eventInvitation.save();
         }
 
         res.status(200).json({
@@ -110,52 +128,6 @@ router.post('/emails', async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error sending emails'
-        });
-    }
-});
-
-
-
-router.post('/rsvp/:eventId', async (req, res) => {
-    const {
-        eventId
-    } = req.params;
-    const {
-        email,
-        response
-    } = req.body;
-
-    console.log('Request Body:', req.body);
-
-    try {
-        // Find the event invitation record for the specified event and recipient email
-        let eventInvitation = await EventInvitation.findOne({
-            eventId,
-            recipientEmail: email
-        });
-
-        // If no invitation record exists, create a new one
-        if (!eventInvitation) {
-            eventInvitation = new EventInvitation({
-                eventId,
-                recipientEmail: email,
-                rsvpResponse: response
-            });
-        } else {
-            // Update the existing invitation record with the RSVP response
-            eventInvitation.rsvpResponse = response;
-        }
-
-        // Save the updated or new invitation record to the database
-        await eventInvitation.save();
-
-        res.status(200).json({
-            message: "RSVP response recorded successfully"
-        });
-    } catch (error) {
-        console.error('Error recording RSVP response:', error);
-        res.status(500).json({
-            error: "Failed to record RSVP response"
         });
     }
 });
@@ -210,25 +182,54 @@ const noHTML = `
 
 router.get('/response/yes', async (req, res) => {
     const {
-        email
-    } = req.query;
+        email,
+        guestId
+    } = req.query; // Retrieve email and guestId from query parameters
     const eventId = req.query.eventId; // Retrieve eventId from query parameters
-
+    console.log("guestId", guestId)
     try {
-        // Update the RSVP response to "attending" for the provided email
+        // Update the RSVP response to "attending" for the provided email and guestId
         await EventInvitation.findOneAndUpdate({
                 eventId,
-                recipientEmail: email
+                recipientEmail: email,
+                invitedGuest: guestId // Add guestId to the query
             }, {
                 rsvpResponse: 'attending'
             }, {
                 upsert: true
             } // Add the upsert option to create a new document if none exists
         );
-        res.send(yesHTML)
-        // res.status(200).json({
-        //     message: 'RSVP response updated successfully to attending'
-        // });
+        res.send(yesHTML);
+    } catch (error) {
+        console.error('Error updating RSVP response:', error);
+        res.status(500).json({
+            error: 'Failed to update RSVP response'
+        });
+    }
+});
+
+router.get('/response/no', async (req, res) => {
+    const {
+        email,
+        guestId
+    } = req.query; // Retrieve email and guestId from query parameters
+    const eventId = req.query.eventId; // Retrieve eventId from query parameters
+    console.log("guestId", guestId)
+    try {
+        // Update the RSVP response to "attending" for the provided email and guestId
+        await EventInvitation.findOneAndUpdate({
+                eventId,
+                recipientEmail: email,
+                invitedGuest: guestId // Add guestId to the query
+            }, {
+                rsvpResponse: 'not attending'
+            }, {
+                upsert: true
+            } // Add the upsert option to create a new document if none exists
+        );
+
+        res.send(noHTML);
+
     } catch (error) {
         console.error('Error updating RSVP response:', error);
         res.status(500).json({
@@ -267,29 +268,15 @@ router.get('/response/no', async (req, res) => {
     }
 });
 
+// Update the backend route to fetch guest responses
 router.get('/events/:eventId/guest-responses', async (req, res) => {
-    const eventId = req.params.eventId;
-
+    const { eventId } = req.params;
     try {
-        // Query the database to find event invitations for the specified event ID
-        const eventInvitations = await EventInvitation.find({
-            eventId
-        });
-
-        // Map event invitations to an object containing guest email and RSVP response
-        const guestResponses = eventInvitations.reduce((acc, curr) => {
-            acc[curr.recipientEmail] = curr.rsvpResponse;
-            return acc;
-        }, {});
-
-        // Respond with the fetched guest responses
+        const guestResponses = await EventInvitation.find({ eventId }).select('invitedGuest rsvpResponse');
         res.status(200).json(guestResponses);
     } catch (error) {
         console.error('Error fetching guest responses:', error);
-        // Send an error response if there's an issue with fetching guest responses
-        res.status(500).json({
-            error: 'Failed to fetch guest responses'
-        });
+        res.status(500).json({ error: 'Error fetching guest responses' });
     }
 });
 
