@@ -3,7 +3,7 @@ const router = express.Router();
 const nodemailer = require('nodemailer');
 const Guest = require('../models/Guest.model');
 const EventInvitation = require('../models/EmailInvitation.model');
-const Event=require('../models/Event.model')
+const Event = require('../models/Event.model')
 
 const baseUrl = 'http://localhost:5005';
 
@@ -90,17 +90,6 @@ router.post('/emails', async (req, res) => {
                             <p>${message}</p>
                             <p><strong>Event ID:</strong> ${eventId}</p>
                             <p><strong>invitedGuests:</strong> ${invitedGuests}</p>
-                            <ul>
-                            ${recipients.map(({ email, guestId }) => ` <
-                    li > Email: $ {
-                        email
-                    },
-                Guest ID: $ {
-                    guestId
-                } < /li>
-                `).join('')}
-                        </ul>
-                            <p>Please respond:</p>
                             <a href="${yesLink}" class="btn">Yes, I'll attend</a>
                             <a href="${noLink}" class="btn" style="margin-left: 10px;">No, I can't attend</a>
                         </div>
@@ -270,13 +259,19 @@ router.get('/response/no', async (req, res) => {
 
 // Update the backend route to fetch guest responses
 router.get('/events/:eventId/guest-responses', async (req, res) => {
-    const { eventId } = req.params;
+    const {
+        eventId
+    } = req.params;
     try {
-        const guestResponses = await EventInvitation.find({ eventId }).select('invitedGuest rsvpResponse');
+        const guestResponses = await EventInvitation.find({
+            eventId
+        }).select('invitedGuest rsvpResponse');
         res.status(200).json(guestResponses);
     } catch (error) {
         console.error('Error fetching guest responses:', error);
-        res.status(500).json({ error: 'Error fetching guest responses' });
+        res.status(500).json({
+            error: 'Error fetching guest responses'
+        });
     }
 });
 

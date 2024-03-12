@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const cloudinary = require("cloudinary").v2;
 const multer = require("../config/multer.config");
+const fs = require('fs');
 
 const mongoose = require("mongoose");
 const Event = require("../models/Event.model");
@@ -55,6 +56,37 @@ router.post("/upload", multer.array("imageUrl", 10), (req, res, next) => {
     next(error); // Forward the error to the error handler middleware
   }
 });
+
+
+// Route handler for image deletion
+router.delete("/images", async (req, res, next) => {
+  try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({
+        error: "Image URL not provided"
+      });
+    }
+
+    // Extract public ID from Cloudinary URL
+    const publicId = imageUrl.split('/').pop().split('.')[0];
+
+    // Delete image from Cloudinary
+    await cloudinary.uploader.destroy(publicId);
+
+    // Update the Event document to remove the imageUrl
+    await Event.updateOne({ imageUrl: imageUrl }, { $unset: { imageUrl: "" } });
+
+    return res.json({
+      message: "Image deleted successfully"
+    });
+  } catch (error) {
+    console.error("Error in /images DELETE route:", error);
+    next(error); // Forward the error to the error handler middleware
+  }
+});
+
 
 
 //  POST /api/events  -  Creates a new event

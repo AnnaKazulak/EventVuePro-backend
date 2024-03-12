@@ -24,6 +24,7 @@ app.use("/api", require("./routes/index.routes"));
 app.use("/api", require("./routes/event.routes"));
 app.use("/api", require("./routes/guest.routes"));
 
+
 console.log("Mounting email routes...");
 app.use("/api", require("./routes/email.routes"));
 
