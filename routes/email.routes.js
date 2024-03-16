@@ -36,8 +36,8 @@ router.post('/emails', async (req, res) => {
                 email,
                 guestId
             } of recipients) {
-            const yesLink = `${process.env.PUBLIC_APP_URL}/api/response/yes?eventId=${eventId}&email=${email}&guestId=${guestId}`;
-            const noLink = `${process.env.PUBLIC_APP_URL}/api/response/no?eventId=${eventId}&email=${email}&guestId=${guestId}`;
+            const yesLink = `${process.env.PUBLIC_APP_URL}/response/yes?eventId=${eventId}&email=${email}&guestId=${guestId}`;
+            const noLink = `${process.env.PUBLIC_APP_URL}/response/no?eventId=${eventId}&email=${email}&guestId=${guestId}`;
 
             await transporter.sendMail({
                 from: 'your-email@gmail.com',
