@@ -7,6 +7,9 @@ const mongoose = require("mongoose");
 const Event = require("../models/Event.model");
 const Guest = require("../models/Guest.model");
 
+const {
+  isAuthenticated
+} = require("../middleware/jwt.middleware");
 
 
 router.post("/upload", multer.array("imageUrl", 10), (req, res, next) => {
@@ -57,7 +60,6 @@ router.post("/upload", multer.array("imageUrl", 10), (req, res, next) => {
   }
 });
 
-
 // Route handler for image deletion
 router.delete("/images", async (req, res, next) => {
   try {
@@ -88,9 +90,8 @@ router.delete("/images", async (req, res, next) => {
 });
 
 
-
-//  POST /api/events  -  Creates a new event
-router.post("/events", (req, res, next) => {
+// POST /api/events - Creates a new event
+router.post("/events", isAuthenticated, (req, res, next) => {
   const {
     title,
     description,
@@ -102,6 +103,9 @@ router.post("/events", (req, res, next) => {
     guests
   } = req.body;
 
+  // Extract user ID from the authenticated request
+  const userId = req.payload._id;
+
   const newEvent = {
     title,
     description,
@@ -111,6 +115,7 @@ router.post("/events", (req, res, next) => {
     imageUrl,
     gallery,
     guests: guests,
+    creator: userId // Assigning the creator ID
   };
 
   Event.create(newEvent)
@@ -133,19 +138,24 @@ router.post("/events", (req, res, next) => {
     });
 });
 
-// GET /api/events-  Retrieves all of the events
-router.get("/events", (req, res, next) => {
-  Event.find()
+
+// GET /api/events - Retrieves all events created by the authenticated user
+router.get("/events", isAuthenticated, (req, res, next) => {
+  // Extract user ID from the authenticated request
+  const userId = req.payload._id;
+
+  Event.find({ creator: userId })
     .populate("guests")
-    .then((allEvents) => res.json(allEvents))
+    .then((userEvents) => res.json(userEvents))
     .catch((err) => {
-      console.log("Error getting list of events...", err);
+      console.log("Error getting list of events for the user...", err);
       res.status(500).json({
-        message: "Error getting list of events",
+        message: "Error getting list of events for the user",
         error: err,
       });
     });
 });
+
 
 //  GET /api/events/:eventId -  Retrieves a specific event by id
 router.get("/events/:eventId", (req, res, next) => {

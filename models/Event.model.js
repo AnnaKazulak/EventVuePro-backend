@@ -28,6 +28,10 @@ const eventSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Guest",
   }, ],
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+  },
 }, {
   timestamps: true,
 });
