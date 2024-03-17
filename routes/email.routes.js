@@ -228,36 +228,37 @@ router.get('/response/no', async (req, res) => {
 });
 
 
-router.get('/response/no', async (req, res) => {
-    const {
-        email
-    } = req.query;
-    const eventId = req.query.eventId; // Retrieve eventId from query parameters
+// router.get('/response/no', async (req, res) => {
+//     const {
+//         email
+//     } = req.query;
+//     const eventId = req.query.eventId; // Retrieve eventId from query parameters
 
-    try {
-        // Update the RSVP response to "not attending" for the provided email
-        await EventInvitation.findOneAndUpdate({
-                eventId,
-                recipientEmail: email
-            }, {
-                rsvpResponse: 'not attending'
-            }, {
-                upsert: true
-            } // Add the upsert option to create a new document if none exists
-        );
-        res.send(noHTML)
-        // res.status(200).json({
-        //     message: 'RSVP response updated successfully to not attending'
-        // });
-    } catch (error) {
-        console.error('Error updating RSVP response:', error);
-        res.status(500).json({
-            error: 'Failed to update RSVP response'
-        });
-    }
-});
+//     try {
+//         // Update the RSVP response to "not attending" for the provided email
+//         await EventInvitation.findOneAndUpdate({
+//                 eventId,
+//                 recipientEmail: email
+//             }, {
+//                 rsvpResponse: 'not attending'
+//             }, {
+//                 upsert: true
+//             } // Add the upsert option to create a new document if none exists
+//         );
+//         res.send(noHTML)
+//         // res.status(200).json({
+//         //     message: 'RSVP response updated successfully to not attending'
+//         // });
+//     } catch (error) {
+//         console.error('Error updating RSVP response:', error);
+//         res.status(500).json({
+//             error: 'Failed to update RSVP response'
+//         });
+//     }
+// });
 
 // Update the backend route to fetch guest responses
+
 router.get('/events/:eventId/guest-responses', async (req, res) => {
     const {
         eventId
