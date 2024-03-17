@@ -18,6 +18,10 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Name is required."],
     },
+    verified: {
+      type: Boolean,
+      default: false, // Set default value to false
+    },
   },
   {
     // this second object adds extra properties: `createdAt` and `updatedAt`
