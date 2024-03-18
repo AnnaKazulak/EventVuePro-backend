@@ -64,7 +64,6 @@ router.post("/signup", async (req, res, next) => {
   }
 });
 
-
 const sendVerificationEmail = async (email, userId) => {
   try {
     // Nodemailer transporter setup
@@ -84,7 +83,7 @@ const sendVerificationEmail = async (email, userId) => {
       subject: "Email Verification",
       html: `
         <p>Click the following link to verify your email:</p>
-        <p><a href=${verfLink}>Verify Email /a></p>
+        <p><a href="${verfLink}">Verify Email</a></p>
       `,
     };
 
@@ -96,6 +95,7 @@ const sendVerificationEmail = async (email, userId) => {
 };
 
 module.exports = { sendVerificationEmail };
+
 
 
 // POST /auth/send-verification-email  - Sends a verification email to the user
@@ -123,6 +123,9 @@ router.post("/send-verification-email", async (req, res, next) => {
     next(error);
   }
 });
+
+
+
 
 // GET /auth/verify-email/:userId - Verifies user's email
 router.get("/verify-email/:userId", async (req, res, next) => {
