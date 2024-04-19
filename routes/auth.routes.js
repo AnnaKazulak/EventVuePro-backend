@@ -212,4 +212,66 @@ router.get("/verify", isAuthenticated, (req, res, next) => {
   res.status(200).json(req.payload);
 });
 
+
+
+// POST /auth/change-username - Changes user's username
+router.post("/change-username", isAuthenticated, async (req, res, next) => {
+  const { username } = req.body;
+  const userId = req.payload._id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: "User not found." });
+      return;
+    }
+
+    user.name = username; // Update the username field
+    console.log('user.name', user.name)
+    await user.save();
+
+    res.status(200).json({ message: "Username updated successfully." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+// POST /auth/change-password - Changes user's password
+router.post("/change-password", isAuthenticated, async (req, res, next) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.payload._id; // Extract userId from token payload
+
+  try {
+    // Find the user by userId
+    const user = await User.findById(userId);
+
+    if (!user) {
+      res.status(404).json({ message: "User not found." });
+      return;
+    }
+
+    // Check if current password matches
+    const passwordCorrect = await bcrypt.compare(currentPassword, user.password);
+
+    if (!passwordCorrect) {
+      res.status(400).json({ message: "Current password is incorrect." });
+      return;
+    }
+
+    // Hash the new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update the password
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully." });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 module.exports = router;
