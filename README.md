@@ -27,6 +27,7 @@ npm install
 
 
 The backend API will be accessible at `http://localhost:5000`.
+For email sending, ngrok is utilized.
 
 ## Demo
 You can access the deployed version of EvenVuePro on Netlify for the frontend and adaptable/fly.io for the backend:
